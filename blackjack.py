@@ -73,8 +73,30 @@ class BlackJack(MDPsim):
         raise NotImplementedError("Implementa la recompensa del blackjack")
     
     def transicion(self, s, a):
-        # TODO: implementar la transición del blackjack
-        raise NotImplementedError("Implementa la transición del blackjack")
+        # Si ya estamos en estado terminal, no hay cambio
+        if self.es_terminal(s):
+            return 'terminal'
+        
+        suma_jugador, carta_visible_crupier, as_usable = s
+        
+        if a == 1:  # Hit (Pedir carta)
+            self.mano_jugador.append(self.reparte_carta())
+            nueva_suma, nuevo_as_usable = self.calcular_mano(self.mano_jugador)
+            
+            # Si se pasa de 21, termina el juego (Bust)
+            if nueva_suma > 21:
+                return 'terminal'
+            return (nueva_suma, carta_visible_crupier, nuevo_as_usable)
+            
+        else:  # Stand (Plantarse)
+            # Turno del crupier: pide cartas hasta tener al menos 17
+            suma_crupier, _ = self.calcular_mano(self.mano_crupier)
+            while suma_crupier < 17:
+                self.mano_crupier.append(self.reparte_carta())
+                suma_crupier, _ = self.calcular_mano(self.mano_crupier)
+            
+            # El juego termina después de plantarse el jugador
+            return 'terminal'
     
     def es_terminal(self, s):
         # El juego termina si el estado es el especial 'terminal'
