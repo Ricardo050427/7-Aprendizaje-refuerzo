@@ -62,8 +62,11 @@ class BlackJack(MDPsim):
         return (suma_jugador, carta_visible_crupier, as_usable)
     
     def acciones_legales(self, s):
-        # TODO: implementar las acciones legales del blackjack
-        raise NotImplementedError("Implementa las acciones legales del blackjack")
+        # Si el estado es terminal, no hay acciones legales
+        if self.es_terminal(s):
+            return []
+        # Acciones: 0 = Stand (Plantarse), 1 = Hit (Pedir)
+        return [0, 1]
     
     def recompensa(self, s, a, s_):
         # TODO: implementar la recompensa del blackjack
@@ -74,8 +77,13 @@ class BlackJack(MDPsim):
         raise NotImplementedError("Implementa la transición del blackjack")
     
     def es_terminal(self, s):
-        # TODO: implementar la condición de estado terminal del blackjack
-        raise NotImplementedError("Implementa la condición de estado terminal del blackjack")
+        # El juego termina si el estado es el especial 'terminal'
+        # o si la suma del jugador supera 21 (Bust)
+        if s == 'terminal':
+            return True
+        if isinstance(s, tuple) and s[0] > 21:
+            return True
+        return False
 
 
 if __name__ == "__main__":
