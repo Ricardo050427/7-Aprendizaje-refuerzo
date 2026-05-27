@@ -28,10 +28,38 @@ class BlackJack(MDPsim):
         self.estados.append('terminal')
         self.estados = tuple(self.estados)
         self.gama = gama
+
+    def reparte_carta(self):
+        # Simular baraja infinita:
+        # 13 rangos posibles (As, 2, ..., 10, J, Q, K) con prob 1/13 cada uno.
+        # Las figuras J, Q, K valen 10. Por tanto, el valor 10 tiene probabilidad 4/13.
+        # El As se representa como 1.
+        carta = randint(1, 13)
+        return 10 if carta >= 10 else carta
+
+    def calcular_mano(self, mano):
+        # Calcula la suma total de una mano y si tiene un As usable.
+        # Mano es una lista de valores de cartas (donde 1 representa al As).
+        suma = sum(mano)
+        as_usable = False
+        if 1 in mano and suma + 10 <= 21:
+            suma += 10
+            as_usable = True
+        return suma, as_usable
         
     def estado_inicial(self):
-        # TODO: implementar el estado inicial del blackjack
-        raise NotImplementedError("Implementa el estado inicial del blackjack")
+        # Repartir 2 cartas al jugador y 2 al crupier (una visible, una oculta)
+        self.mano_jugador = [self.reparte_carta(), self.reparte_carta()]
+        self.mano_crupier = [self.reparte_carta(), self.reparte_carta()]
+        
+        # Calcular la suma inicial y As usable del jugador
+        suma_jugador, as_usable = self.calcular_mano(self.mano_jugador)
+        carta_visible_crupier = self.mano_crupier[0]
+        
+        # Guardar bandera por si hay Blackjack natural inmediato del jugador
+        self.natural_blackjack = (suma_jugador == 21)
+        
+        return (suma_jugador, carta_visible_crupier, as_usable)
     
     def acciones_legales(self, s):
         # TODO: implementar las acciones legales del blackjack
