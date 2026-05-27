@@ -15,8 +15,18 @@ class BlackJack(MDPsim):
     
     """
     def __init__(self, gama):
-        # TODO: definir los parámetros del blackjack, agrega lo que consideres necesario
-        self.estados = None # TODO: definir los estados del blackjack
+        # Definir los estados del blackjack: tuplas (suma_jugador, carta_visible_crupier, as_usable)
+        # Suma del jugador: de 4 a 21
+        # Carta visible del crupier: de 1 a 10 (donde 1 representa al As)
+        # As usable: True, False
+        # Se añade un estado especial 'terminal' para simplificar la lógica de fin del juego
+        self.estados = []
+        for suma in range(4, 22):
+            for visible in range(1, 11):
+                for as_usable in (True, False):
+                    self.estados.append((suma, visible, as_usable))
+        self.estados.append('terminal')
+        self.estados = tuple(self.estados)
         self.gama = gama
         
     def estado_inicial(self):
