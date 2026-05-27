@@ -69,8 +69,38 @@ class BlackJack(MDPsim):
         return [0, 1]
     
     def recompensa(self, s, a, s_):
-        # TODO: implementar la recompensa del blackjack
-        raise NotImplementedError("Implementa la recompensa del blackjack")
+        # La recompensa en cada estado no terminal es 0
+        if not self.es_terminal(s_):
+            return 0
+        
+        # Al llegar a un estado terminal, calculamos la recompensa final
+        suma_jugador, _ = self.calcular_mano(self.mano_jugador)
+        
+        # Caso 1: El jugador se pasó de 21 (Bust)
+        if suma_jugador > 21:
+            return -1
+            
+        # Caso 2: El jugador se plantó (Stand) o hubo Blackjack natural
+        suma_crupier, _ = self.calcular_mano(self.mano_crupier)
+        
+        # Si el jugador tiene Blackjack natural (21 con sus 2 primeras cartas)
+        if len(self.mano_jugador) == 2 and suma_jugador == 21:
+            # Comprobar si el crupier también tiene Blackjack natural con sus 2 primeras cartas
+            suma_crupier_inicial, _ = self.calcular_mano(self.mano_crupier[:2])
+            if suma_crupier_inicial == 21:
+                return 0 # Empate (ambos tienen Blackjack natural)
+            else:
+                return 1.5 # Victoria por Blackjack natural (paga 3 a 2)
+                
+        # Comparación estándar tras plantarse
+        if suma_crupier > 21:
+            return 1 # El crupier se pasó de 21, gana el jugador
+        elif suma_jugador > suma_crupier:
+            return 1 # Jugador tiene más puntos, gana el jugador
+        elif suma_jugador < suma_crupier:
+            return -1 # Crupier tiene más puntos, gana el crupier
+        else:
+            return 0 # Empate (Push)
     
     def transicion(self, s, a):
         # Si ya estamos en estado terminal, no hay cambio
