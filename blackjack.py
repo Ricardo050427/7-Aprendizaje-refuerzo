@@ -140,16 +140,19 @@ class BlackJack(MDPsim):
 
 if __name__ == "__main__":
 
-    blackjack = BlackJack(gama=1,...) # TODO: agregar los parámetros necesarios para el blackjack   
+    blackjack = BlackJack(gama=1.0)
 
-    # TODO: definir los parámetros de SARSA y Q-learning, luego crear las instancias 
-    # de cada algoritmo
-    Q_sarsa = SARSA( blackjack, alfa=..., epsilon=..., n_ep=..., n_iter=...)
-    Q_learning = Q_learning( blackjack, alfa=..., epsilon=..., n_ep=..., n_iter=...)
+    # Parámetros para los algoritmos
+    # alfa: tasa de aprendizaje
+    # epsilon: exploración
+    # n_ep: número de episodios (100,000 episodios para asegurar la exploración y convergencia)
+    # n_iter: máximo de iteraciones por episodio (20 es suficiente en Blackjack)
+    Q_sarsa = SARSA(blackjack, epsilon=0.1, alfa=0.1, n_ep=100_000, n_iter=20)
+    Q_learn = Q_learning(blackjack, epsilon=0.1, alfa=0.1, n_ep=100_000, n_iter=20)
 
     # Encuentra las políticas óptimas para cada algoritmo
     pi_s = PoliticaGreedy(Q_sarsa)
-    pi_q = PoliticaGreedy(Q_learning)
+    pi_q = PoliticaGreedy(Q_learn)
 
     # Imprime las políticas óptimas para cada estado no terminal
     print("Estado".center(10) + '|' +  "SARSA".center(10) + '|' + "Q-learning".center(10))
@@ -164,22 +167,58 @@ if __name__ == "__main__":
 
 """
 ****************************************************************************************
-Responde las siguientes preguntas:
+Respuestas a las preguntas de análisis:
 
 1. ¿Cuáles son los estados, acciones, recompensas y transiciones en el problema del 
     blackjack?  
+   - Estados (S): Tuplas (suma_jugador, carta_visible_crupier, as_usable). La suma del jugador
+     va de 4 a 21, la carta del crupier de 1 a 10 y el As usable es True/False. Adicionalmente,
+     se utiliza el estado 'terminal' que representa el fin de la partida.
+   - Acciones (A): A = {0, 1}, donde 0 representa Plantarse (Stand) y 1 representa Pedir (Hit).
+   - Recompensas (R): 0 para estados no terminales. En el estado terminal: +1 si el jugador gana,
+     -1 si pierde o se pasa (Bust), 0 por empate (Push) y +1.5 por Blackjack natural (21 inicial).
+   - Transiciones (P): Si la acción es Hit (1), se reparte una carta (probabilidades de 1/13
+     para 1-9 y 4/13 para 10). Si la suma supera 21, se transiciona a 'terminal'. Si la acción
+     es Stand (0), el crupier pide cartas hasta alcanzar al menos 17 y se transiciona a 'terminal'.
 
 2. ¿Cómo se pueden representar los estados del blackjack de manera eficiente para el 
     aprendizaje por refuerzo?
+   - Representándolos como la tupla compacta (suma_jugador, carta_visible_crupier, as_usable). 
+     Esto evita recordar la secuencia y el palo de las cartas individuales, reduciendo el 
+     espacio de estados a solo 360 estados no terminales activos, lo que acelera dramáticamente 
+     la convergencia de los algoritmos tabulares.
 
 3. ¿Qué pasa si se modifica el valor de epsilón de la política epsilon-greedy?
+   - Epsilon regula la exploración (acciones aleatorias) frente al uso del conocimiento (explotación).
+     Un epsilon alto (cercano a 1) fomenta la exploración de todo el espacio de estados, pero
+     dificulta la convergencia estable y disminuye el retorno promedio. Un epsilon muy bajo 
+     (cercano a 0) explota casi siempre el conocimiento actual, lo que puede resultar en una
+     convergencia prematura a políticas subóptimas locales si no se ha explorado lo suficiente.
 
 4. ¿Cómo afecta el valor de alfa en la convergencia de los algoritmos SARSA y Q-learning?
+   - Alfa es la tasa de aprendizaje. Si alfa es alta (cercana a 1), los valores Q cambian
+     rápidamente adaptándose a las recompensas más recientes, pero provocan oscilaciones e
+     inestabilidad en entornos estocásticos como el Blackjack. Un alfa baja (ej. 0.05 o 0.1) 
+     permite actualizaciones suaves que estabilizan la convergencia a lo largo de miles de episodios.
 
 5. ¿Cuál de los dos algoritmos, SARSA o Q-learning, consideras que es más adecuado para 
-   el problema del blackjack y por qué?
+    el problema del blackjack y por qué?
+   - Q-learning suele ser más adecuado porque es off-policy: actualiza la tabla Q asumiendo
+     que de ahí en adelante se jugará con la política óptima (greedy). En Blackjack, dado que
+     el objetivo es aprender la estrategia óptima estricta para aplicarla sin exploración
+     aleatoria (sin cometer errores voluntarios de epsilon), Q-learning estima la función
+     de valor óptima de forma más directa que SARSA (on-policy), el cual incorpora la penalización
+     de los pasos aleatorios de exploración dentro de sus estimaciones.
 
 6. ¿Se puede explicar con cierta lógica del juego la política óptima encontrada por cada 
-   algoritmo? ¿Qué acciones se toman en cada estado y por qué?
+    algoritmo? ¿Qué acciones se toman en cada estado y por qué?
+   - Sí, la política obtenida refleja fielmente la "Estrategia Básica" matemática del Blackjack:
+     - Suma <= 11: Siempre se pide carta (Hit = 1), ya que no hay riesgo de pasarse.
+     - Suma >= 17: Se acostumbra a plantarse (Stand = 0) porque el riesgo de pasarse al pedir es muy alto.
+     - Sumas intermedias (12 a 16): Si el dealer muestra una carta débil (2 a 6), el jugador se 
+       planta porque hay alta probabilidad de que el dealer se pase (Bust). Si el dealer muestra
+       una carta fuerte (7 a 10 o As), el jugador asume el riesgo y pide carta para intentar competir.
+     - Con As usable: Se juega de forma más agresiva (pidiendo con sumas menores o iguales a 17)
+       puesto que si se pasa, el As absorbe la pérdida de valor valiendo 1 sin terminar el juego.
 ****************************************************************************************
 """
